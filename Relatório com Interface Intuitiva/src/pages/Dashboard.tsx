@@ -7,10 +7,11 @@ import { DownloadTemplate } from '../components/DownloadTemplate';
 import { UploadSection } from '../components/UploadSection';
 import { ReportDisplay } from '../components/ReportDisplay';
 import  UserManagement  from '../components/UserManagement';
-import { Toaster } from '../components/ui/sonner';
+import { Toaster, toast } from '../components/ui/sonner';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/button';
 import { LogOut, User, Users } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function Dashboard() {
   const { user, logout } = useAuth();
@@ -33,24 +34,56 @@ export default function Dashboard() {
   };
 
   const handleGenerateReport = async () => {
-    if (!uploadedFile) return;
+    if (!uploadedFile) {
+      toast.error('Nenhum arquivo selecionado', {
+        description: 'Por favor, selecione um arquivo antes de gerar o relatório.'
+      });
+      return;
+    }
 
     setIsGenerating(true);
-    await new Promise(resolve => setTimeout(resolve, 3000));
     
-    const mockReport = generateMockReport(uploadedFile.name);
-    setGeneratedReport(mockReport);
-    setIsGenerating(false);
-  };
-
-  const generateMockReport = (fileName: string): string => {
-    const currentDate = new Date().toLocaleDateString('pt-BR');
-    
-    return `# Relatório de Análise de Dados
-**Data de Geração:** ${currentDate}
-**Arquivo Analisado:** ${fileName}
-... (conteúdo do relatório permanece o mesmo) ...
-*Relatório gerado automaticamente por IA avançada*`;
+    try {
+      // Chamar API para gerar relatório
+      const blob = await apiService.generateReport(uploadedFile);
+      
+      // Criar URL temporária para download
+      const url = window.URL.createObjectURL(blob);
+      
+      // Criar elemento <a> para download automático
+      const a = document.createElement('a');
+      a.href = url;
+      
+      // Nome do arquivo com timestamp
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+      const fileName = `Relatorio_Financeiro_${timestamp}.xlsx`;
+      a.download = fileName;
+      
+      // Adicionar ao DOM, clicar e remover
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      // Limpar URL temporária
+      window.URL.revokeObjectURL(url);
+      
+      // Mostrar mensagem de sucesso
+      toast.success('Relatório gerado com sucesso!', {
+        description: 'O arquivo foi baixado automaticamente.'
+      });
+      
+      // Marcar como gerado (para mostrar feedback visual)
+      setGeneratedReport('success');
+      
+    } catch (error: any) {
+      console.error('Erro ao gerar relatório:', error);
+      toast.error('Erro ao gerar relatório', {
+        description: error.message || 'Ocorreu um erro ao processar o arquivo. Tente novamente.'
+      });
+      setGeneratedReport(null);
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -127,8 +160,22 @@ export default function Dashboard() {
                     isGenerating={isGenerating}
                   />
                   
-                  {generatedReport && (
-                    <ReportDisplay report={generatedReport} fileName={uploadedFile?.name} />
+                  {generatedReport === 'success' && (
+                    <div className="mt-6 p-6 bg-green-900/30 border border-green-700 rounded-xl">
+                      <div className="flex items-center gap-3">
+                        <div className="bg-green-600 p-2 rounded-lg">
+                          <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-green-300 font-semibold text-lg">Relatório Gerado com Sucesso!</h3>
+                          <p className="text-green-400 text-sm mt-1">
+                            O arquivo Excel foi baixado automaticamente. Verifique sua pasta de Downloads.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>

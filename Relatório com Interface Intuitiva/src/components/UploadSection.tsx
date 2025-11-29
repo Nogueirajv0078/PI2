@@ -49,15 +49,22 @@ export function UploadSection({
   };
 
   const handleFile = (file: File) => {
-    const validTypes = [
-      'text/csv',
-      'application/vnd.ms-excel',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    ];
-
-    if (!validTypes.includes(file.type) && !file.name.endsWith('.csv') && !file.name.endsWith('.xlsx')) {
+    // Validar extensão
+    const validExtensions = ['.csv', '.xlsx', '.xls'];
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    
+    if (!validExtensions.includes(fileExtension)) {
       toast.error('Formato inválido', {
-        description: 'Por favor, envie apenas arquivos CSV ou Excel (.xlsx).'
+        description: 'Por favor, envie apenas arquivos CSV ou Excel (.xlsx, .xls).'
+      });
+      return;
+    }
+
+    // Validar tamanho (50MB máximo)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
+      toast.error('Arquivo muito grande', {
+        description: 'O arquivo deve ter no máximo 50MB.'
       });
       return;
     }
@@ -104,7 +111,7 @@ export function UploadSection({
         <input
           ref={fileInputRef}
           type="file"
-          accept=".csv,.xlsx,.xls"
+          accept=".csv,.xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
           onChange={handleFileInput}
           className="hidden"
         />

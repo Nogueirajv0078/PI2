@@ -232,23 +232,53 @@ class ApiService {
     });
   }
 
-  // Relatórios
-  async downloadUserReport(): Promise<Blob> {
-    const url = `${API_BASE_URL}/reports/download-excel/`;
+  // Relatórios - Gerar relatório a partir de arquivo
+  async generateReport(file: File): Promise<Blob> {
+    const url = `${API_BASE_URL}/report/`;
     const token = this.getAuthToken();
 
-    const config: RequestInit = {
-      method: 'GET',
-      headers: {
-        ...(token && { Authorization: `Bearer ${token}` }),
-      },
-    };
+    if (!token) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
 
     try {
-      const response = await fetch(url, config);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          // Não definir Content-Type - o browser define automaticamente com boundary para FormData
+        },
+        body: formData,
+      });
+
+      if (response.status === 401) {
+        // Token expirado, tentar renovar
+        const refreshed = await this.refreshToken();
+        if (refreshed) {
+          const retryResponse = await fetch(url, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${this.getAuthToken()}`,
+            },
+            body: formData,
+          });
+          if (!retryResponse.ok) {
+            const errorData = await retryResponse.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Erro ao gerar relatório');
+          }
+          return retryResponse.blob();
+        } else {
+          this.logout();
+          throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        }
+      }
 
       if (!response.ok) {
-        throw new Error('Erro ao baixar o relatório');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Erro ao gerar relatório');
       }
 
       return response.blob();
