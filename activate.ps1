@@ -10,8 +10,22 @@ Write-Host "=== Project Activation Script ==="
 # Paths
 # ----------------------------
 $projectRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
-$backendPath = Join-Path $projectRoot "backend"
-$frontendPath = Join-Path $projectRoot "frontend"
+$backendPath = Join-Path $projectRoot "Backend"
+# Frontend folder name contains spaces in this repo
+# Try to locate the frontend folder automatically to avoid encoding issues with accented names
+$frontendPath = $null
+try {
+    $found = Get-ChildItem -Path $projectRoot -Directory | Where-Object { $_.Name -like '*Interface*' -or $_.Name -like '*Relat*' } | Select-Object -First 1
+    if ($found) {
+        $frontendPath = $found.FullName
+    } else {
+        # Fallback to the known folder name (may fail if encoding causes issues)
+        $frontendPath = Join-Path $projectRoot "Relatório com Interface Intuitiva"
+    }
+} catch {
+    # If directory enumeration fails for any reason, fallback to expected name
+    $frontendPath = Join-Path $projectRoot "Relatório com Interface Intuitiva"
+}
 $venvPath = Join-Path $backendPath "venv"
 $venvPython = Join-Path $venvPath "Scripts\python.exe"
 
@@ -57,19 +71,40 @@ function Install-Backend-Requirements {
 function Install-Frontend-Dependencies {
     if (Test-Path "$frontendPath\package.json") {
         Write-Host "Installing frontend dependencies..."
-        Set-Location $frontendPath
+        Set-Location -LiteralPath $frontendPath
         npm install
     }
 }
 
 function Start-Backend {
     Write-Host "Starting backend..."
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd `"$backendPath`"; & `"$venvPython`" manage.py runserver"
+    $cmd = "Set-Location -LiteralPath '$backendPath'; & '$venvPython' manage.py runserver"
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd
 }
 
 function Start-Frontend {
     Write-Host "Starting frontend..."
-    Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd `"$frontendPath`"; npm start"
+    # Determine available npm script (prefer start -> dev -> serve)
+    $packageJsonPath = Join-Path $frontendPath 'package.json'
+    $startCmd = 'npm run dev'
+    if (Test-Path $packageJsonPath) {
+        try {
+            $pkg = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
+            if ($pkg.scripts -and $pkg.scripts.start) {
+                $startCmd = 'npm start'
+            } elseif ($pkg.scripts -and $pkg.scripts.dev) {
+                $startCmd = 'npm run dev'
+            } elseif ($pkg.scripts -and $pkg.scripts.serve) {
+                $startCmd = 'npm run serve'
+            }
+        } catch {
+            # fallback to npm run dev if package.json cannot be parsed
+            $startCmd = 'npm run dev'
+        }
+    }
+
+    $cmd = "Set-Location -LiteralPath '$frontendPath'; $startCmd"
+    Start-Process powershell -ArgumentList '-NoExit', '-Command', $cmd
 }
 
 # ----------------------------

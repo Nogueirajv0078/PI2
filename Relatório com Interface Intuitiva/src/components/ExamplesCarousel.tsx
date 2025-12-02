@@ -5,7 +5,52 @@ import { ChevronLeft, ChevronRight, TrendingUp, Users, DollarSign, ShoppingCart 
 import { Button } from './ui/button';
 
 const examples = [
-  // ... (data remains unchanged)
+  {
+    icon: TrendingUp,
+    color: 'from-green-400 to-teal-500',
+    title: 'Vendas Semanais',
+    category: 'Comércio',
+    stats: [
+      { label: 'Receita', value: 'R$ 24.500', change: '+8%' },
+      { label: 'Pedidos', value: '1.240', change: '+12%' },
+      { label: 'Conversão', value: '4.2%', change: '+0.4%' },
+    ],
+    insights: [
+      'Aumento de vendas em categorias sazonais.',
+      'Campanhas de e-mail tiveram CTR acima da média.',
+      'O ticket médio subiu 5% em clientes recorrentes.'
+    ]
+  },
+  {
+    icon: Users,
+    color: 'from-indigo-500 to-purple-500',
+    title: 'Engajamento de Usuários',
+    category: 'Marketing',
+    stats: [
+      { label: 'Usuários Ativos', value: '8.3k', change: '+6%' },
+      { label: 'Novos Cadastros', value: '420', change: '+3%' },
+      { label: 'Retenção', value: '72%', change: '+1%' },
+    ],
+    insights: [
+      'A retenção melhorou após onboarding otimizado.',
+      'Conteúdo educativo aumentou o tempo médio na plataforma.'
+    ]
+  },
+  {
+    icon: ShoppingCart,
+    color: 'from-yellow-400 to-orange-500',
+    title: 'Performance do Produto',
+    category: 'Operações',
+    stats: [
+      { label: 'Itens Vendidos', value: '3.1k', change: '+9%' },
+      { label: 'Estoque', value: '560', change: '-4%' },
+      { label: 'Devoluções', value: '1.2%', change: '-0.1%' },
+    ],
+    insights: [
+      'Alguns SKUs precisam de reposição urgente.',
+      'Promoções aumentaram rotatividade de estoque em 20%.'
+    ]
+  }
 ];
 
 export function ExamplesCarousel() {

@@ -1,0 +1,37 @@
+from openpyxl import Workbook
+from pathlib import Path
+
+rows = [
+    ["Nome","Produto","Valor","Quantidade","Data","Categoria","Status"],
+    ["João Silva","Notebook Dell",4500.00,2,"2025-01-15","Eletrônicos","Aprovado"],
+    ["Maria Santos","Mouse Logitech",150.00,5,"2025-01-16","Periféricos","Aprovado"],
+    ["Pedro Costa","Teclado Mecânico",350.00,3,"2025-01-17","Periféricos","Pendente"],
+    ["Ana Oliveira","Monitor LG",1200.00,4,"2025-01-18","Eletrônicos","Aprovado"],
+    ["Carlos Souza","Webcam HD",280.00,6,"2025-01-19","Acessórios","Aprovado"],
+    ["Juliana Lima","Headset Gamer",450.00,2,"2025-01-20","Acessórios","Cancelado"],
+    ["Roberto Alves","SSD 1TB",650.00,8,"2025-01-21","Hardware","Aprovado"],
+    ["Fernanda Reis","Cadeira Gamer",1800.00,1,"2025-01-22","Mobiliário","Aprovado"],
+    ["Lucas Martins","Mesa Digitalizadora",980.00,2,"2025-01-23","Periféricos","Pendente"],
+    ["Patricia Rocha","Impressora HP",850.00,3,"2025-01-24","Equipamentos","Aprovado"],
+]
+
+# Determine output path (frontend public folder)
+repo_root = Path(__file__).resolve().parent.parent
+public_dir = repo_root / "Relatório com Interface Intuitiva" / "public"
+public_dir.mkdir(parents=True, exist_ok=True)
+output_path = public_dir / "Modelo_base.xlsx"
+
+wb = Workbook()
+ws = wb.active
+ws.title = "Modelo"
+
+for r in rows:
+    ws.append(r)
+
+# Apply simple number formatting for Valor
+for row in ws.iter_rows(min_row=2, min_col=3, max_col=3):
+    for cell in row:
+        cell.number_format = '0.00'
+
+wb.save(output_path)
+print(f"Wrote {output_path}")

@@ -47,72 +47,94 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-gray-100 flex flex-col items-center justify-center p-4 relative">
-      <div className="absolute top-0 left-0 w-full z-10">
-        <HeaderLogin />
-      </div>
+    <div className="min-h-screen w-full bg-gradient-to-br from-[#050816] via-[#071028] to-[#050816] text-gray-100 flex items-center justify-center p-6">
 
-      <Card className="w-full max-w-md bg-gray-800/50 backdrop-blur-sm border-gray-700/60 shadow-2xl">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-semibold text-gray-100">Acesse sua Conta</CardTitle>
-          <CardDescription className="text-gray-300">
-            Bem-vindo de volta!
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent>
-          <form onSubmit={handleLogin} className="space-y-6">
-            
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-gray-300 font-semibold">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="seu@email.com"
-                value={formData.email}
-                onChange={handleInputChange}
-                className="bg-gray-900/50 border-gray-700 text-gray-100 focus:ring-2 focus:ring-pink-500"
-                required
-              />
+      <Card className="relative w-full max-w-4xl bg-gradient-to-br from-gray-900/60 to-gray-800/40 backdrop-blur-lg border border-gray-700/40 shadow-2xl rounded-3xl overflow-hidden">
+        <div className="grid grid-cols-1 md:grid-cols-2">
+          {/* Left - Illustration / welcome */}
+          <div className="hidden md:flex flex-col items-start justify-center gap-6 p-10 bg-[linear-gradient(135deg,#0f172a66,_#11182733)]">
+            <div className="w-full mb-4">
+              <HeaderLogin />
             </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-gray-300 font-semibold">Senha</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Sua senha"
-                value={formData.password}
-                onChange={handleInputChange}
-                className="bg-gray-900/50 border-gray-700 text-gray-100 focus:ring-2 focus:ring-pink-500"
-                required
-              />
+            <div className="rounded-full bg-gradient-to-br from-purple-500 to-pink-500 p-3 shadow-lg">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-white"><path d="M12 2L15 8H9L12 2Z" fill="white"/></svg>
             </div>
+            <h2 className="text-3xl font-extrabold">Bem-vindo ao RelatórioIA</h2>
+            <p className="text-gray-300 leading-relaxed">Gere relatórios inteligentes com IA. Faça upload da sua planilha e obtenha insights automaticamente.</p>
+            <ul className="text-sm text-gray-400 space-y-2">
+              <li>• Rápido e seguro</li>
+              <li>• Gráficos e previsões</li>
+              <li>• Exporta em Excel</li>
+            </ul>
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:opacity-90 transition-all text-white font-semibold disabled:opacity-50"
-              disabled={isLoading}
-            >
-              {isLoading ? "Entrando..." : "Entrar"}
-            </Button>
+          {/* Right - Form */}
+          <div className="p-8 md:p-12 flex items-center justify-center">
+            <div className="w-full max-w-md">
+              {/* Mobile/Small screens: show header above the form to avoid overlapping */}
+              <div className="mb-6 md:hidden">
+                <HeaderLogin />
+              </div>
+              <CardHeader className="text-left px-0 pb-6">
+                <CardTitle className="text-2xl font-bold text-gray-100">Acesse sua Conta</CardTitle>
+                <CardDescription className="text-gray-400">Entre para começar a gerar relatórios</CardDescription>
+              </CardHeader>
 
-          </form>
-        </CardContent>
+              <CardContent className="px-0">
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div>
+                    <Label htmlFor="email" className="text-gray-300 font-medium">Email</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="mt-2 bg-gray-900/40 border-gray-700 text-gray-100 focus:ring-2 focus:ring-pink-500 rounded-lg py-3 px-4"
+                      required
+                    />
+                  </div>
 
-        <CardFooter className="flex justify-center">
-          <p className="text-center text-gray-300 text-sm">
-            Não tem uma conta?{" "}
-            <button
-              onClick={() => navigate("/register")}
-              className="text-pink-400 hover:text-pink-300 underline font-semibold"
-            >
-              Criar conta
-            </button>
-          </p>
-        </CardFooter>
+                  <div>
+                    <Label htmlFor="password" className="text-gray-300 font-medium">Senha</Label>
+                    <Input
+                      id="password"
+                      name="password"
+                      type="password"
+                      placeholder="Sua senha"
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      className="mt-2 bg-gray-900/40 border-gray-700 text-gray-100 focus:ring-2 focus:ring-pink-500 rounded-lg py-3 px-4"
+                      required
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:scale-[1.01] transform-gpu transition-all duration-200 text-white font-semibold shadow-2xl py-3 rounded-lg disabled:opacity-60"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Entrando..." : "Entrar"}
+                  </Button>
+
+                </form>
+              </CardContent>
+
+              <CardFooter className="mt-4 px-0">
+                <p className="text-center text-gray-400 text-sm">
+                  Não tem uma conta?{' '}
+                  <button
+                    onClick={() => navigate('/register')}
+                    className="text-pink-400 hover:text-pink-300 underline font-semibold"
+                  >
+                    Criar conta
+                  </button>
+                </p>
+              </CardFooter>
+            </div>
+          </div>
+        </div>
       </Card>
     </div>
   );

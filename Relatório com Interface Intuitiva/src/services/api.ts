@@ -241,51 +241,67 @@ class ApiService {
       throw new Error('Usuário não autenticado');
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-
+    // Create an in-memory copy of the file before uploading to avoid ERR_UPLOAD_FILE_CHANGED
+    // which happens when the original file is modified during the upload (OneDrive, editors, etc.).
+    let fileCopyBlob: Blob;
     try {
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          // Não definir Content-Type - o browser define automaticamente com boundary para FormData
-        },
-        body: formData,
-      });
+      const buffer = await file.arrayBuffer();
+      fileCopyBlob = new Blob([buffer], { type: file.type || 'application/octet-stream' });
+    } catch (err) {
+      console.warn('Não foi possível criar cópia em memória do arquivo, usando original:', err);
+      fileCopyBlob = file;
+    }
 
-      if (response.status === 401) {
-        // Token expirado, tentar renovar
-        const refreshed = await this.refreshToken();
-        if (refreshed) {
-          const retryResponse = await fetch(url, {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${this.getAuthToken()}`,
-            },
-            body: formData,
-          });
-          if (!retryResponse.ok) {
-            const errorData = await retryResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || 'Erro ao gerar relatório');
+    const maxAttempts = 2;
+    let lastError: any = null;
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const formData = new FormData();
+      // third parameter preserves the filename
+      formData.append('file', fileCopyBlob as Blob, file.name);
+
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          body: formData,
+        });
+
+        if (response.status === 401) {
+          const refreshed = await this.refreshToken();
+          if (refreshed) {
+            // update token for next attempt
+            continue; // loop will retry with same formData rebuilt
+          } else {
+            this.logout();
+            throw new Error('Sessão expirada. Por favor, faça login novamente.');
           }
-          return retryResponse.blob();
-        } else {
-          this.logout();
-          throw new Error('Sessão expirada. Por favor, faça login novamente.');
+        }
+
+        if (!response.ok) {
+          // try to parse error body
+          const errorData = await response.json().catch(() => ({}));
+          const message = errorData.error || errorData.detail || JSON.stringify(errorData) || `HTTP ${response.status}`;
+          throw new Error(message);
+        }
+
+        return response.blob();
+      } catch (error) {
+        console.error(`Tentativa ${attempt} - erro ao gerar relatório:`, error);
+        lastError = error;
+        // If the browser reports upload changed, wait briefly and retry once
+        if (attempt < maxAttempts) {
+          await new Promise((res) => setTimeout(res, 500));
+          continue;
         }
       }
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Erro ao gerar relatório');
-      }
-
-      return response.blob();
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
     }
+
+    // After attempts exhausted
+    console.error('generateReport failed after retries:', lastError);
+    throw new Error(lastError?.message || 'Erro ao gerar relatório (falha no upload)');
   }
 
   // Verificar se o usuário está autenticado
